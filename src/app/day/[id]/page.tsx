@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
+import { useEffect, useState, use, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Snow from "@/components/Snow";
@@ -13,15 +13,19 @@ interface DayData {
 }
 
 type Phase = "loading" | "locked" | "opening" | "open" | "error";
+type RevealPhase = "card" | "photo";
 
 const CONFETTI = ["❄️", "⭐", "✨", "🌟", "💛", "🐸", "🦀", "🎄"];
+const POLAROID_TILTS = [-2, 1.5, -1, 2.5, -2.5, 1, -1.5, 2, -1, 1.5, -2, 1, -1.5, 2.5, -2, 1, -1, 2, -2.5, 1.5, -1, 2, -1.5, 1];
 
 export default function DayPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const dayId = parseInt(id, 10);
   const [phase, setPhase] = useState<Phase>("loading");
+  const [revealPhase, setRevealPhase] = useState<RevealPhase>("card");
   const [data, setData] = useState<DayData | null>(null);
   const [confetti, setConfetti] = useState<Array<{ id: number; emoji: string; x: number; delay: number }>>([]);
+  const [isFlipping, setIsFlipping] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -41,7 +45,6 @@ export default function DayPage({ params }: { params: Promise<{ id: string }> })
         if (!d) return;
         setData(d);
         setPhase("opening");
-        // Trigger confetti after a short delay
         setTimeout(() => {
           setPhase("open");
           setConfetti(
@@ -52,13 +55,28 @@ export default function DayPage({ params }: { params: Promise<{ id: string }> })
               delay: i * 0.1,
             }))
           );
-          // Bell sound via Web Audio API
           playBell();
           setTimeout(() => setConfetti([]), 2500);
         }, 600);
       })
       .catch(() => setPhase("error"));
   }, [dayId, router]);
+
+  function handleFindGift() {
+    setIsFlipping(true);
+    setTimeout(() => {
+      setRevealPhase("photo");
+      setIsFlipping(false);
+    }, 350);
+  }
+
+  function handleBackToCard() {
+    setIsFlipping(true);
+    setTimeout(() => {
+      setRevealPhase("card");
+      setIsFlipping(false);
+    }, 350);
+  }
 
   if (phase === "loading" || phase === "opening") {
     return (
@@ -81,11 +99,7 @@ export default function DayPage({ params }: { params: Promise<{ id: string }> })
     );
   }
 
-  if (phase === "locked") {
-    return (
-      <LockedView dayId={dayId} />
-    );
-  }
+  if (phase === "locked") return <LockedView dayId={dayId} />;
 
   if (phase === "error" || !data) {
     return (
@@ -93,15 +107,14 @@ export default function DayPage({ params }: { params: Promise<{ id: string }> })
         <div className="text-center space-y-4">
           <span className="text-5xl">🐸</span>
           <p className="text-cream/60 font-body">Something went wrong…</p>
-          <Link href="/calendar" className="text-gold/70 text-sm hover:text-gold">
-            ← Back to calendar
-          </Link>
+          <Link href="/calendar" className="text-gold/70 text-sm hover:text-gold">← Back to calendar</Link>
         </div>
       </div>
     );
   }
 
   const { card } = data;
+  const tilt = POLAROID_TILTS[(dayId - 1) % POLAROID_TILTS.length];
 
   return (
     <main className="relative min-h-dvh bg-forest-radial overflow-hidden">
@@ -130,7 +143,7 @@ export default function DayPage({ params }: { params: Promise<{ id: string }> })
       <div className="relative z-10 max-w-lg mx-auto px-4 py-8">
         {/* Nav */}
         <div className="flex items-center justify-between mb-6 animate-fade-in">
-          <Link href="/calendar" className="text-cream/40 hover:text-cream/80 text-sm font-sans transition-colors flex items-center gap-1">
+          <Link href="/calendar" className="text-cream/40 hover:text-cream/80 text-sm font-sans transition-colors">
             ← Calendar
           </Link>
           <div className="text-xs font-sans text-gold/50 tracking-widest uppercase">
@@ -139,8 +152,8 @@ export default function DayPage({ params }: { params: Promise<{ id: string }> })
           <div className="w-16" />
         </div>
 
-        {/* Gift box reveal header */}
-        <div className="text-center mb-8 animate-fade-in" style={{ animationDelay: "0.2s" }}>
+        {/* Emoji + title header */}
+        <div className="text-center mb-6 animate-fade-in" style={{ animationDelay: "0.2s" }}>
           <span
             className="text-6xl block mb-2"
             style={{
@@ -155,65 +168,172 @@ export default function DayPage({ params }: { params: Promise<{ id: string }> })
               ✦ Special Day ✦
             </span>
           )}
-          <h2 className="font-display text-2xl text-gold leading-tight">
-            {card.title}
-          </h2>
+          <h2 className="font-display text-2xl text-gold leading-tight">{card.title}</h2>
         </div>
 
-        {/* Photo — shown above card when present */}
-        {card.imageUrl && (
-          <div
-            className="rounded-2xl overflow-hidden mb-4 shadow-2xl animate-fade-in"
-            style={{ animationDelay: "0.35s" }}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={card.imageUrl}
-              alt=""
-              className="w-full object-cover"
-              style={{ maxHeight: "420px" }}
+        {/* Phase indicator pills */}
+        {card.giftHint && (
+          <div className="flex justify-center gap-2 mb-6 animate-fade-in" style={{ animationDelay: "0.3s" }}>
+            <button
+              onClick={revealPhase === "photo" ? handleBackToCard : undefined}
+              className={`w-2 h-2 rounded-full transition-all duration-300 ${revealPhase === "card" ? "bg-gold scale-125" : "bg-gold/30"}`}
+              aria-label="Card view"
+            />
+            <button
+              onClick={revealPhase === "card" && card.giftHint ? handleFindGift : undefined}
+              className={`w-2 h-2 rounded-full transition-all duration-300 ${revealPhase === "photo" ? "bg-gold scale-125" : "bg-gold/30"}`}
+              aria-label="Gift view"
             />
           </div>
         )}
 
-        {/* Card */}
+        {/* Content area — transitions between card and polaroid */}
         <div
-          className="card-parchment rounded-2xl p-7 mb-6 animate-fade-in"
-          style={{ animationDelay: "0.4s" }}
+          className="transition-all duration-350"
+          style={{
+            opacity: isFlipping ? 0 : 1,
+            transform: isFlipping ? "scale(0.95) translateY(8px)" : "scale(1) translateY(0)",
+          }}
         >
-          {/* Coupon style */}
-          {card.type === "coupon" && card.couponTitle && (
-            <div className="mb-4 pb-4 border-b border-forest-700/15">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-xs font-sans tracking-widest uppercase text-forest-700/40">
-                  Gift Coupon
-                </span>
+          {revealPhase === "card" ? (
+            /* ── PHASE 1: Sweet Card ──────────────────── */
+            <div>
+              <div
+                className="card-parchment rounded-2xl p-7 mb-5 animate-fade-in"
+                style={{ animationDelay: "0.4s" }}
+              >
+                {/* Coupon header */}
+                {card.type === "coupon" && card.couponTitle && (
+                  <div className="mb-4 pb-4 border-b border-forest-700/15">
+                    <span className="text-xs font-sans tracking-widest uppercase text-forest-700/40">Gift Coupon</span>
+                    <h3 className="font-display text-xl text-forest-900 mt-1">{card.couponTitle}</h3>
+                    {card.couponDescription && (
+                      <p className="text-forest-700/70 text-sm font-body mt-1">{card.couponDescription}</p>
+                    )}
+                  </div>
+                )}
+
+                {/* Message */}
+                <div className="text-forest-800 font-body leading-relaxed whitespace-pre-line text-[15px]">
+                  {card.message}
+                </div>
+
+                <div className="mt-4 flex justify-end">
+                  <span className="text-xs text-forest-700/30 font-sans italic">
+                    {card.type === "love-note" ? "💌 A note" :
+                     card.type === "memory" ? "📷 A memory" :
+                     card.type === "coupon" ? "🎫 A gift" :
+                     card.type === "poem" ? "📜 A poem" : "✉️ A message"}
+                  </span>
+                </div>
               </div>
-              <h3 className="font-display text-xl text-forest-900">{card.couponTitle}</h3>
-              {card.couponDescription && (
-                <p className="text-forest-700/70 text-sm font-body mt-1">{card.couponDescription}</p>
+
+              {/* Find your gift button */}
+              {card.giftHint && (
+                <button
+                  onClick={handleFindGift}
+                  className="w-full py-4 rounded-2xl border border-gold/30 bg-forest-800/50 text-gold font-display text-lg tracking-wide hover:bg-forest-700/60 hover:border-gold/60 transition-all duration-200 animate-fade-in group"
+                  style={{ animationDelay: "0.5s", animation: "glowPulse 3s ease-in-out infinite, fadeIn 0.6s ease both 0.5s" }}
+                >
+                  <span style={{ display: "inline-block", animation: "float 2s ease-in-out infinite" }}>🎁</span>
+                  {" "}Find your gift →
+                </button>
               )}
             </div>
+          ) : (
+            /* ── PHASE 2: Polaroid + Gift Hint ──────── */
+            <div className="animate-fade-in">
+              {/* Back link */}
+              <button
+                onClick={handleBackToCard}
+                className="text-cream/40 hover:text-cream/70 text-sm font-sans mb-6 flex items-center gap-1 transition-colors"
+              >
+                ← Back to card
+              </button>
+
+              {/* Polaroid frame */}
+              {card.imageUrl && (
+                <div
+                  className="mx-auto mb-6"
+                  style={{
+                    maxWidth: "320px",
+                    transform: `rotate(${tilt}deg)`,
+                    filter: "drop-shadow(0 8px 32px rgba(0,0,0,0.6))",
+                  }}
+                >
+                  <div
+                    style={{
+                      background: "#fdfaf4",
+                      padding: "12px 12px 52px",
+                      borderRadius: "2px",
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.8)",
+                    }}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={card.imageUrl}
+                      alt=""
+                      className="w-full object-cover"
+                      style={{ display: "block", aspectRatio: "4/5", objectPosition: "center top" }}
+                    />
+                    {/* Polaroid caption area */}
+                    <div className="text-center pt-3 pb-1">
+                      <span
+                        style={{
+                          fontFamily: "'Playfair Display', Georgia, serif",
+                          fontSize: "13px",
+                          fontStyle: "italic",
+                          color: "rgba(42,31,16,0.5)",
+                          letterSpacing: "0.03em",
+                        }}
+                      >
+                        December {dayId} · CRABMAS {new Date().getFullYear()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Gift hint card */}
+              <div
+                className="rounded-2xl p-6 text-center border animate-fade-in"
+                style={{
+                  background: "linear-gradient(145deg, rgba(26,61,43,0.7), rgba(15,35,24,0.8))",
+                  borderColor: "rgba(201,168,76,0.25)",
+                  animationDelay: "0.15s",
+                }}
+              >
+                <div className="text-3xl mb-3" style={{ animation: "float 2.5s ease-in-out infinite" }}>🎁</div>
+                <p
+                  className="font-sans text-xs tracking-widest uppercase mb-3"
+                  style={{ color: "rgba(201,168,76,0.5)" }}
+                >
+                  Your gift is waiting
+                </p>
+                <p
+                  style={{
+                    fontFamily: "'Playfair Display', Georgia, serif",
+                    fontSize: "18px",
+                    fontStyle: "italic",
+                    color: "#fdf8ef",
+                    lineHeight: "1.5",
+                  }}
+                >
+                  {card.giftHint}
+                </p>
+                <p
+                  className="font-sans text-xs mt-4"
+                  style={{ color: "rgba(201,168,76,0.3)" }}
+                >
+                  Look for the box with <strong style={{ color: "rgba(201,168,76,0.6)" }}>#{dayId}</strong> on it
+                </p>
+              </div>
+            </div>
           )}
-
-          {/* Message */}
-          <div className="text-forest-800 font-body leading-relaxed whitespace-pre-line text-[15px]">
-            {card.message}
-          </div>
-
-          {/* Type badge */}
-          <div className="mt-4 flex justify-end">
-            <span className="text-xs text-forest-700/30 font-sans italic">
-              {card.type === "love-note" ? "💌 A note" :
-               card.type === "memory" ? "📷 A memory" :
-               card.type === "coupon" ? "🎫 A gift" :
-               card.type === "poem" ? "📜 A poem" : "✉️ A message"}
-            </span>
-          </div>
         </div>
 
         {/* Navigation */}
-        <div className="flex gap-3 animate-fade-in" style={{ animationDelay: "0.6s" }}>
+        <div className="flex gap-3 mt-5 animate-fade-in" style={{ animationDelay: "0.6s" }}>
           {dayId > 1 && (
             <Link
               href={`/day/${dayId - 1}`}
@@ -238,7 +358,6 @@ export default function DayPage({ params }: { params: Promise<{ id: string }> })
           )}
         </div>
 
-        {/* Footer signature */}
         <p className="text-center text-cream/20 text-xs mt-8 font-body italic">
           With love, Mini Crab Stick 🦀
         </p>
@@ -273,8 +392,7 @@ function LockedView({ dayId }: { dayId: number }) {
 function playBell() {
   try {
     const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
-    const freqs = [523.25, 659.25, 783.99]; // C5, E5, G5
-
+    const freqs = [523.25, 659.25, 783.99];
     freqs.forEach((freq, i) => {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();

@@ -177,6 +177,7 @@ export default function AdminPage() {
                 { key: "title", label: "Title", multiline: false },
                 { key: "emoji", label: "Emoji", multiline: false },
                 { key: "message", label: "Message", multiline: true },
+                { key: "giftHint", label: "🎁 Gift Hint (where the physical gift is hidden)", multiline: false },
                 { key: "couponTitle", label: "Coupon Title (optional)", multiline: false },
                 { key: "couponDescription", label: "Coupon Description (optional)", multiline: false },
                 { key: "imageUrl", label: "Image URL (optional)", multiline: false },

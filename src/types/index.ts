@@ -8,6 +8,7 @@ export interface DayCard {
   emoji?: string;
   imageUrl?: string;
   audioUrl?: string;
+  giftHint?: string;
   couponTitle?: string;
   couponDescription?: string;
   backgroundColor?: string;
