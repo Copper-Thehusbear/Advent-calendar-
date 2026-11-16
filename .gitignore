@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build
+.next/
+out/
+dist/
+
+# Env — NEVER commit this
+.env
+.env.local
+.env.*.local
+
+# Vercel
+.vercel
+
+# IDE
+.DS_Store
+*.swp
+.idea/
+
+# Debug
+npm-debug.log*
