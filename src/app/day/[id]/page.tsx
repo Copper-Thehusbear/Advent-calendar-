@@ -160,6 +160,22 @@ export default function DayPage({ params }: { params: Promise<{ id: string }> })
           </h2>
         </div>
 
+        {/* Photo — shown above card when present */}
+        {card.imageUrl && (
+          <div
+            className="rounded-2xl overflow-hidden mb-4 shadow-2xl animate-fade-in"
+            style={{ animationDelay: "0.35s" }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={card.imageUrl}
+              alt=""
+              className="w-full object-cover"
+              style={{ maxHeight: "420px" }}
+            />
+          </div>
+        )}
+
         {/* Card */}
         <div
           className="card-parchment rounded-2xl p-7 mb-6 animate-fade-in"
@@ -184,18 +200,6 @@ export default function DayPage({ params }: { params: Promise<{ id: string }> })
           <div className="text-forest-800 font-body leading-relaxed whitespace-pre-line text-[15px]">
             {card.message}
           </div>
-
-          {/* Image */}
-          {card.imageUrl && (
-            <div className="mt-4 rounded-xl overflow-hidden border border-forest-700/10">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={card.imageUrl}
-                alt=""
-                className="w-full object-cover max-h-64"
-              />
-            </div>
-          )}
 
           {/* Type badge */}
           <div className="mt-4 flex justify-end">
