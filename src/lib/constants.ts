@@ -28,7 +28,6 @@ export const DEFAULT_CARDS: DayCard[] = [
     giftHint: "🔍 Check inside your top drawer",
     backgroundColor: "#2d1a0f",
     accentColor: "#e8c97a",
-    isSpecial: true,
   },
   {
     id: 3,
@@ -98,14 +97,15 @@ export const DEFAULT_CARDS: DayCard[] = [
   },
   {
     id: 9,
-    title: "Day 9 — New Year, Same You",
-    message: "New Year's Eve. A boat. A whole group of people counting down together.\n\nThe city lit up. Everyone cheered.\n\nI kissed you at midnight and thought — yes. This is exactly the right person to start a new year with.\n\nSame wish, every year. 🎆",
+    title: "Day 9 — One Year ✨",
+    message: "9/11.\n\nOne year ago, something shifted.\n\nI remember this night. The river behind us, the city lights, and you — looking like you were exactly where you were meant to be.\n\nI didn't know then what this would become. But I know now.\n\nHappy Anniversary, my Mini Crab Stick. 🐸🦀",
     type: "memory",
-    emoji: "🎆",
+    emoji: "💛",
     imageUrl: "/images/day-09.png",
     giftHint: "🔍 Under your pillow — special one tonight ✨",
     backgroundColor: "#3d2b0a",
     accentColor: "#e8c97a",
+    isSpecial: true,
   },
   {
     id: 10,
