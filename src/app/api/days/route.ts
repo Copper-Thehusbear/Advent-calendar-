@@ -18,9 +18,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Invalid session" }, { status: 401 });
   }
 
+  const previewMode = process.env.PREVIEW_MODE === "true";
   const days = Array.from({ length: 24 }, (_, i) => {
     const day = i + 1;
     const status = getDayStatus(day);
+    if (previewMode) return { day, ...status, isUnlocked: true, isPast: true, isFuture: false };
     return { day, ...status };
   });
 

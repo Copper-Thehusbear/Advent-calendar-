@@ -35,8 +35,10 @@ export async function GET(
   }
 
   // Server-side date check — cannot be bypassed by client
+  // PREVIEW_MODE=true in env skips the lock (for testing only)
+  const previewMode = process.env.PREVIEW_MODE === "true";
   const status = getDayStatus(dayId);
-  if (!status.isUnlocked) {
+  if (!status.isUnlocked && !previewMode) {
     return NextResponse.json({ error: "Not yet", locked: true }, { status: 403 });
   }
 
