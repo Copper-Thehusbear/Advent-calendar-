@@ -359,7 +359,7 @@ export default function DayPage({ params }: { params: Promise<{ id: string }> })
         </div>
 
         <p className="text-center text-cream/20 text-xs mt-8 font-body italic">
-          With love, Mini Crab Stick 🦀
+          With love, Little Frog 🐸
         </p>
       </div>
     </main>
